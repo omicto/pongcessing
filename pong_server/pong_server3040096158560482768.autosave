@@ -1,12 +1,11 @@
 /**
  * Collision (Pong). 
  * 
- * Move the mouse up and down to move the paddle.  aaaa
+ * Move the mouse up and down to move the paddle.  
  */
  
 import oscP5.*;
 import netP5.*;
-import ketai.sensors.*;
 
 // Global variables for the ball
 float ball_x;
@@ -14,6 +13,9 @@ float ball_y;
 float ball_dir = 1;
 float ball_size = 15;  // Radius
 float dy = 0;  // Direction
+
+int extMouseY = 0;
+int pExtMouseY = 0;
 
 // Global variables for the paddle
 int paddle_width = 10;
@@ -25,20 +27,14 @@ int dist_wall = 15;
 OscP5 oscP5;
 NetAddress remoteLocation;
 
-///
-String [] player = {"left","right"};
-
-/*Sensores*/
-KetaiSensor sensor;
-
 void setup()
 {
   
-  println (displayWidth); 
-  println (displayHeight); 
+  print(displayWidth); 
+  print (displayHeight); 
   
   
-  //size(640, 360);
+  size(640, 360);
   rectMode(RADIUS);
   ellipseMode(RADIUS);
   noStroke();
@@ -48,13 +44,9 @@ void setup()
   
   
   /////////////OSCP
-  oscP5 = new OscP5(this,12000);
+  oscP5 = new OscP5(this,12001);
   // send to computer address
-  remoteLocation = new NetAddress("192.168.1.110",12001);
-
-  // Register for sensors
-  sensor = new KetaiSensor(this);
-  sensor.start();
+  //remoteLocation = new NetAddress("192.168.43.194",12001);
 }
 
 void draw() 
@@ -71,7 +63,8 @@ void draw()
   
   
   // Constrain paddle to screen
-  float paddle_y = constrain(mouseY, paddle_height, height-paddle_height);
+  
+  float paddle_y = constrain(extMouseY, paddle_height, height-paddle_height);
 
   // Test to see if the ball is touching the paddle
   float py = width-dist_wall-paddle_width-ball_size;
@@ -79,8 +72,8 @@ void draw()
      && ball_y > paddle_y - paddle_height - ball_size 
      && ball_y < paddle_y + paddle_height + ball_size) {
     ball_dir *= -1;
-    if(mouseY != pmouseY) {
-      dy = (mouseY-pmouseY)/2.0;
+    if(extMouseY != pExtMouseY) {
+      dy = (extMouseY-pExtMouseY)/2.0;
       if(dy >  5) { dy =  5; }
       if(dy < -5) { dy = -5; }
     }
@@ -107,25 +100,15 @@ void draw()
   fill(153);
   rect(width-dist_wall, paddle_y, paddle_width, paddle_height); 
   
-  
+  ///////// OSCP /////////////////
+  /*OscMessage msg = new OscMessage("/pos");
+  msg.add(mouseY);
+  oscP5.send(msg,remoteLocation);*/
 }
 
-/*void mouseDragged(){
-  //Send the current 
-  OscMessage msg = new OscMessage("/right");
-  msg.add(mouseY);
-  oscP5.send(msg,remoteLocation);
-}*/
-
-float previousY = 0;
-float currentY = 0;
-float g = 0;
-void onAccelerometerEvent(float x, float y, float z){
-  g = g * 0.8 + 0.2 * y; // Supuestamente elimina o reduce el valor de la gravedad en la medicion
-
-  previousY = currentY;
-  currentY = y;
-  OscMessage msg = new OscMessage("/" + player[1]);
-  msg.add(currentY - previousY);
-  oscP5.send(msg,remoteLocation);
+/* incoming osc message are forwarded to the oscEvent method. */
+void oscEvent(OscMessage theOscMessage) {
+  pExtMouseY = extMouseY;
+  extMouseY = theOscMessage.get(0).intValue();
+  extMouseY *= displayHeight/360;
 }
