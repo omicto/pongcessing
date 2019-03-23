@@ -14,8 +14,11 @@ float ball_dir = 1;
 float ball_size = 15;  // Radius
 float dy = 0;  // Direction
 
-float extMouseY = 0;
-float pExtMouseY = 0;
+float extMouseY_R = 0;
+float pExtMouseY_R = 0;
+
+float extMouseY_L = 0;
+float pExtMouseY_L = 0;
 
 // Global variables for the paddle
 int paddle_width = 10;
@@ -30,7 +33,7 @@ NetAddress remoteLocation;
 void setup()
 {
 
-  extMouseY = width/2;
+  extMouseY_R = width/2;
   
   println (displayWidth); 
   println (displayHeight); 
@@ -58,10 +61,10 @@ void draw()
   ball_x += ball_dir * 1.0;
   ball_y += dy;
 
-  // If ball has exited the screen through the right
-  if(ball_x > width+ball_size) {
+  // If ball has exited the screen
+  if(ball_x > width+ball_size || ball_x < 0 - ball_size) {
     // ball_x = -width/2 - ball_size;
-    ball_x =  ball_size + paddle_width + 1;
+    ball_x =  width/2;
     ball_y = random(0, height);
     dy = 0;
   }
@@ -71,7 +74,7 @@ void draw()
   /*** Right paddle code*/
   // Constrain paddle to screen
   
-  float rightPaddle_Y = constrain(extMouseY, paddle_height, height-paddle_height);
+  float rightPaddle_Y = constrain(extMouseY_R, paddle_height, height-paddle_height);
 
   // Test to see if the ball is touching the paddle
   float rightPy = width-dist_wall-paddle_width-ball_size;
@@ -80,24 +83,24 @@ void draw()
      && ball_y < rightPaddle_Y + paddle_height + ball_size) 
   {
     ball_dir *= -1;
-    if(extMouseY != pExtMouseY) {
-      dy = (extMouseY-pExtMouseY)/2.0;
+    if(extMouseY_R != pExtMouseY_R) {
+      dy = (extMouseY_R-pExtMouseY_R)/2.0;
       if(dy >  5) { dy =  5; }
       if(dy < -5) { dy = -5; }
     }
   }
 
   // Left paddle
-  float leftPaddle_Y = constrain(extMouseY, paddle_height, height-paddle_height);
+  float leftPaddle_Y = constrain(extMouseY_L, paddle_height, height-paddle_height);
 
   // Test to see if the ball is touching the paddle
-  if (ball_x == dist_wall // ==
+  if (ball_x == dist_wall + paddle_width // ==
      && ball_y > leftPaddle_Y - paddle_height - ball_size 
      && ball_y < leftPaddle_Y + paddle_height + ball_size) 
   {
     ball_dir *= -1;
-    if(extMouseY != pExtMouseY) {
-      dy = (extMouseY-pExtMouseY)/2.0;
+    if(extMouseY_L != pExtMouseY_L) {
+      dy = (extMouseY_L-pExtMouseY_L)/2.0;
       if(dy >  5) { dy =  5; }
       if(dy < -5) { dy = -5; }
     }
@@ -105,10 +108,7 @@ void draw()
 
 
   /*********************************BALL CONDITIONS*******************************************/
-  // If ball hits paddle or back wall, reverse direction
-  if(ball_x < ball_size && ball_dir == -1) {
-    ball_dir *= -1;
-  }
+
   
   // If the ball is touching top or bottom edge, reverse direction
   if(ball_y > height-ball_size) {
@@ -137,21 +137,29 @@ void draw()
 
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {
+  float dif =  theOscMessage.get(0).floatValue();
   if(theOscMessage.checkAddrPattern("/left") == true){
-    //...
+    moveLeftPaddleOnDifference(dif);
   }
-  float y = 0;
   if(theOscMessage.checkAddrPattern("/right") == true){
-     y =  theOscMessage.get(0).floatValue();
-    moveRightPaddleOnDifference(y);
+    moveRightPaddleOnDifference(dif);
   }
-  println("received Y:" + y + "ext: " + pExtMouseY + " mo" + extMouseY);
+  println("received Y:" + dif + "ext: " + pExtMouseY_L + " mo" + extMouseY_L);
   
 }
 
 
-void moveLeftPaddle(float y){
+void moveLeftPaddleOnDifference(float dif){
+// Tweak as needed
+    int speedFactor = 20;
 
+    if(dif > 0){
+      extMouseY_L += abs(dif) * speedFactor;
+    }
+    if(dif < 0){
+      extMouseY_L -= abs(dif) * speedFactor;
+    }
+    extMouseY_L = constrain(extMouseY_L, 0, 360);
 }
 
 
@@ -182,11 +190,11 @@ void moveRightPaddleOnDifference(float dif){
     int speedFactor = 20;
 
     if(dif > 0){
-      extMouseY += abs(dif) * speedFactor;
+      extMouseY_R += abs(dif) * speedFactor;
     }
     if(dif < 0){
-      extMouseY -= abs(dif) * speedFactor;
+      extMouseY_R -= abs(dif) * speedFactor;
     }
-    extMouseY = constrain(extMouseY, 0, 360);
+    extMouseY_R = constrain(extMouseY_R, 0, 360);
 
 }
