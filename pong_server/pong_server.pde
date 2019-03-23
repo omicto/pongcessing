@@ -143,7 +143,7 @@ void oscEvent(OscMessage theOscMessage) {
   float y = 0;
   if(theOscMessage.checkAddrPattern("/right") == true){
      y =  theOscMessage.get(0).floatValue();
-    moveRightPaddle(y);
+    moveRightPaddleOnDifference(y);
   }
   println("received Y:" + y + "ext: " + pExtMouseY + " mo" + extMouseY);
   
@@ -154,8 +154,9 @@ void moveLeftPaddle(float y){
 
 }
 
-void moveRightPaddle(float y){
-    pExtMouseY = extMouseY;
+
+/*void moveRightPaddle(float y){
+    /*pExtMouseY = extMouseY;
     if(pExtMouseY <= 0) {
       extMouseY = 0;
       return;
@@ -165,10 +166,27 @@ void moveRightPaddle(float y){
       return;
     }
 
-    if(y > 0 && abs(y) > 2){
-      extMouseY -= abs(y);
+    int speedFactor = 2;
+
+    if(y > 0){
+      extMouseY += abs(y) * speedFactor;
     }
-    if(y < 0 && abs(y) > 0.5){
-      extMouseY += y;
+    if(y < -0.5){
+      extMouseY -= abs(y) * speedFactor;
     }
+    extMouseY = constrain(extMouseY, 0, 360);
+}*/
+
+void moveRightPaddleOnDifference(float dif){
+    // Tweak as needed
+    int speedFactor = 20;
+
+    if(dif > 0){
+      extMouseY += abs(dif) * speedFactor;
+    }
+    if(dif < 0){
+      extMouseY -= abs(dif) * speedFactor;
+    }
+    extMouseY = constrain(extMouseY, 0, 360);
+
 }

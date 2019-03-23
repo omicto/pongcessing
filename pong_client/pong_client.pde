@@ -117,15 +117,22 @@ void draw()
   oscP5.send(msg,remoteLocation);
 }*/
 
-float previousY = 0;
-float currentY = 0;
+float previousG = 0;
+float currentG = 0;
 float g = 0;
+
+
 void onAccelerometerEvent(float x, float y, float z){
+  OscMessage msg = new OscMessage("/" + player[1]);
   g = g * 0.8 + 0.2 * y; // Supuestamente elimina o reduce el valor de la gravedad en la medicion
 
-  previousY = currentY;
-  currentY = y;
-  OscMessage msg = new OscMessage("/" + player[1]);
-  msg.add(currentY - previousY);
+  
+  previousG = currentG;
+  currentG = g;
+
+  // Send difference between readings
+  msg.add(currentG - previousG);
+  
+  
   oscP5.send(msg,remoteLocation);
 }
