@@ -26,25 +26,42 @@ OscP5 oscP5;
 NetAddress remoteLocation;
 
 ///
-String [] player = {"left","right"};
+String [] players = {"left","right"};
+int playerNumber;
 
 /*Sensores*/
 KetaiSensor sensor;
 
+// Buttons
+int shapeSize;
+
+int rectX, rectY;
+color rectColor;
+color rectHighlight;
+
+int circleX, circleY;
+color circleColor;
+color circleHighlight;
+
+
+boolean rectOver = false;
+boolean circleOver = false;
+
 void setup()
 {
+  shapeSize = width/9;
+
+  rectColor = color(224, 123, 22);
+  circleColor = color(2, 120, 56);
   
-  println (displayWidth); 
-  println (displayHeight); 
-  
-  
-  //size(640, 360);
-  rectMode(RADIUS);
-  ellipseMode(RADIUS);
-  noStroke();
-  smooth();
-  ball_y = height/2;
-  ball_x = 1;
+  rectHighlight = color(104, 56, 9);
+  circleHighlight = color(5, 73, 37);
+
+  circleX = width/2+shapeSize/2+10;
+  circleY = height/2;
+  rectX = width/2-shapeSize-10;
+  rectY = height/2-shapeSize/2;
+  ellipseMode(CENTER);
   
   
   /////////////OSCP
@@ -57,57 +74,67 @@ void setup()
   sensor.start();
 }
 
-void draw() 
-{
+void draw() {
+  update(mouseX, mouseY);
   background(51);
   
-  ball_x += ball_dir * 1.0;
-  ball_y += dy;
-  if(ball_x > width+ball_size) {
-    ball_x = -width/2 - ball_size;
-    ball_y = random(0, height);
-    dy = 0;
+  if (rectOver) {
+    fill(rectHighlight);
+  } else {
+    fill(rectColor);
   }
+  stroke(255);
+  rect(rectX, rectY, shapeSize, shapeSize);
   
-  
-  // Constrain paddle to screen
-  float paddle_y = constrain(mouseY, paddle_height, height-paddle_height);
+  if (circleOver) {
+    fill(circleHighlight);
+  } else {
+    fill(circleColor);
+  }
+  stroke(0);
+  ellipse(circleX, circleY, shapeSize, shapeSize);
+}
 
-  // Test to see if the ball is touching the paddle
-  float py = width-dist_wall-paddle_width-ball_size;
-  if(ball_x == py /*    ==  */
-     && ball_y > paddle_y - paddle_height - ball_size 
-     && ball_y < paddle_y + paddle_height + ball_size) {
-    ball_dir *= -1;
-    if(mouseY != pmouseY) {
-      dy = (mouseY-pmouseY)/2.0;
-      if(dy >  5) { dy =  5; }
-      if(dy < -5) { dy = -5; }
-    }
-  } 
-  
-  // If ball hits paddle or back wall, reverse direction
-  if(ball_x < ball_size && ball_dir == -1) {
-    ball_dir *= -1;
+void update(int x, int y) {
+  if ( overCircle(circleX, circleY, shapeSize) ) {
+    circleOver = true;
+    rectOver = false;
+  } else if ( overRect(rectX, rectY, shapeSize, shapeSize) ) {
+    rectOver = true;
+    circleOver = false;
+  } else {
+    circleOver = rectOver = false;
   }
-  
-  // If the ball is touching top or bottom edge, reverse direction
-  if(ball_y > height-ball_size) {
-    dy = dy * -1;
-  }
-  if(ball_y < ball_size) {
-    dy = dy * -1;
-  }
+}
 
-  // Draw ball
-  fill(255);
-  ellipse(ball_x, ball_y, ball_size, ball_size);
-  
-  // Draw the paddle
-  fill(153);
-  rect(width-dist_wall, paddle_y, paddle_width, paddle_height); 
-  
-  
+boolean overRect(int x, int y, int width, int height)  {
+  if (mouseX >= x && mouseX <= x+width && 
+      mouseY >= y && mouseY <= y+height) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+boolean overCircle(int x, int y, int diameter) {
+  float disX = x - mouseX;
+  float disY = y - mouseY;
+  if (sqrt(sq(disX) + sq(disY)) < diameter/2 ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void mousePressed() {
+  if (circleOver) {
+    playerNumber = 0;
+    rectOver = false;
+  }
+  if (rectOver) {
+    playerNumber = 1;
+    circleOver = false;
+  }
 }
 
 /*void mouseDragged(){
@@ -123,7 +150,7 @@ float g = 0;
 
 
 void onAccelerometerEvent(float x, float y, float z){
-  OscMessage msg = new OscMessage("/" + player[1]);
+  OscMessage msg = new OscMessage("/" + players[playerNumber]);
   g = g * 0.8 + 0.2 * y; // Supuestamente elimina o reduce el valor de la gravedad en la medicion
 
   

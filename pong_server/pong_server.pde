@@ -61,10 +61,10 @@ void draw()
   ball_x += ball_dir * 1.0;
   ball_y += dy;
 
-  // If ball has exited the screen through the right
-  if(ball_x > width+ball_size) {
+  // If ball has exited the screen
+  if(ball_x > width+ball_size || ball_x < 0 - ball_size) {
     // ball_x = -width/2 - ball_size;
-    ball_x =  ball_size + paddle_width + 1;
+    ball_x =  width/2;
     ball_y = random(0, height);
     dy = 0;
   }
@@ -94,7 +94,7 @@ void draw()
   float leftPaddle_Y = constrain(extMouseY_L, paddle_height, height-paddle_height);
 
   // Test to see if the ball is touching the paddle
-  if (ball_x == dist_wall // ==
+  if (ball_x == dist_wall + paddle_width // ==
      && ball_y > leftPaddle_Y - paddle_height - ball_size 
      && ball_y < leftPaddle_Y + paddle_height + ball_size) 
   {
@@ -108,10 +108,7 @@ void draw()
 
 
   /*********************************BALL CONDITIONS*******************************************/
-  // If ball hits paddle or back wall, reverse direction
-  if(ball_x < ball_size && ball_dir == -1) {
-    ball_dir *= -1;
-  }
+
   
   // If the ball is touching top or bottom edge, reverse direction
   if(ball_y > height-ball_size) {
