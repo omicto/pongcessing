@@ -67,7 +67,7 @@ void setup()
   /////////////OSCP
   oscP5 = new OscP5(this,12000);
   // send to computer address
-  remoteLocation = new NetAddress("192.168.1.110",12001);
+  remoteLocation = new NetAddress("192.168.0.11",12001);
 
   // Register for sensors
   sensor = new KetaiSensor(this);
