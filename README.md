@@ -6,3 +6,8 @@ Es necesario utilizar la IP correcta del servidor en que se ejecutará el juego.
 
 ## PC
 Ejecutar `pong_server.pde`
+
+## Integrantes
+Sebastián de la Riva<br />
+Julieta Navarro<br />
+Christoper Ochoa<br />
