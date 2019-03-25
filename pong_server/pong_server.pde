@@ -29,6 +29,9 @@ float previousLeftPaddle_Y = 0;
 
 int dist_wall = 15;
 
+float leftPaddle_Y = 0;
+float rightPaddle_Y = 0;
+
 //////////OSCP
 OscP5 oscP5;
 NetAddress remoteLocation;
@@ -61,6 +64,7 @@ void draw()
 {
   background(51);
   
+
   ball_x += ball_dir * 1.0;
   ball_y += dy;
 
@@ -76,8 +80,9 @@ void draw()
 
   /*** Right paddle code*/
   // Constrain paddle to screen
-  
-  float rightPaddle_Y = constrain(extMouseY_R, paddle_height, height-paddle_height);
+  //updating the previous paddle
+  previousRightPaddle_Y = rightPaddle_Y;
+  rightPaddle_Y = constrain(extMouseY_R, paddle_height, height-paddle_height);
   
   // Test to see if the ball is touching the paddle
   float rightPy = width-dist_wall-paddle_width-ball_size;
@@ -92,11 +97,11 @@ void draw()
       if(dy < -5) { dy = -5; }
     }
   }
-  //updating the previous paddle
-  previousRightPaddle_Y = rightPaddle_Y;
+  
   
   // Left paddle
-  float leftPaddle_Y = constrain(extMouseY_L, paddle_height, height-paddle_height);
+  previousLeftPaddle_Y = leftPaddle_Y;
+  leftPaddle_Y = constrain(extMouseY_L, paddle_height, height-paddle_height);
 
   // Test to see if the ball is touching the paddle
   if (ball_x == dist_wall + paddle_width // ==
@@ -110,8 +115,7 @@ void draw()
       if(dy < -5) { dy = -5; }
     }
   }
-  //updating the previous paddle
-  previousLeftPaddle_Y = leftPaddle_Y;
+  
 
 
   /*********************************BALL CONDITIONS*******************************************/
