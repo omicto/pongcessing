@@ -11,35 +11,26 @@ import netP5.*;
 float ball_x;
 float ball_y;
 float ball_dir = 1;
-float ball_size = 15;  // Radius
+float BALL_SIZE = 15;  // Radius
 float dy = 0;  // Direction
+int DIST_WALL = 15;
 
-float extMouseY_R = 0;
-float pExtMouseY_R = 0;
-
-float extMouseY_L = 0;
-float pExtMouseY_L = 0;
-
-// Global variables for the paddle
-int paddle_width = 10;
-int paddle_height = 60;
-
-float previousRightPaddle_Y = 0;
-float previousLeftPaddle_Y = 0;
-
-int dist_wall = 15;
-
-float leftPaddle_Y = 0;
-float rightPaddle_Y = 0;
 
 //////////OSCP
 OscP5 oscP5;
 NetAddress remoteLocation;
 
+
+Paddle izquierdo;
+Paddle derecho;
+
 void setup()
 {
 
-  extMouseY_R = width/2;
+  izquierdo = new Paddle(10, 60, Paddle.IZQUIERDO);
+  derecho = new Paddle(10, 60, Paddle.DERECHO);
+
+  //extMouseY_R = width/2;
   
   println (displayWidth); 
   println (displayHeight); 
@@ -69,48 +60,32 @@ void draw()
   ball_y += dy;
 
   // If ball has exited the screen
-  if(ball_x > width+ball_size || ball_x < 0 - ball_size) {
-    // ball_x = -width/2 - ball_size;
+  if(ball_x > width+BALL_SIZE || ball_x < 0 - BALL_SIZE) {
+    // ball_x = -width/2 - BALL_SIZE;
     ball_x =  width/2;
     ball_y = random(0, height);
     dy = 0;
   }
   
-  
-
-  /*** Right paddle code*/
-  // Constrain paddle to screen
-  //updating the previous paddle
-  previousRightPaddle_Y = rightPaddle_Y;
-  rightPaddle_Y = constrain(extMouseY_R, paddle_height, height-paddle_height);
-  
-  // Test to see if the ball is touching the paddle
-  float rightPy = width-dist_wall-paddle_width-ball_size;
-  if (ball_x == rightPy /*    ==  */
-     && ball_y > rightPaddle_Y - paddle_height - ball_size 
-     && ball_y < rightPaddle_Y + paddle_height + ball_size) 
+ /*** Right paddle code*/
+ 
+  if (derecho.isBallTouching()) 
   {
     ball_dir *= -1;
-    if(rightPaddle_Y != previousRightPaddle_Y) {
-      dy = (rightPaddle_Y-previousRightPaddle_Y)/2.0;
+    if(derecho.hasPaddleMoved()) {
+      dy = derecho.paddleMovement()/2.0;
       if(dy >  5) { dy =  5; }
       if(dy < -5) { dy = -5; }
     }
   }
   
-  
   // Left paddle
-  previousLeftPaddle_Y = leftPaddle_Y;
-  leftPaddle_Y = constrain(extMouseY_L, paddle_height, height-paddle_height);
-
   // Test to see if the ball is touching the paddle
-  if (ball_x == dist_wall + paddle_width // ==
-     && ball_y > leftPaddle_Y - paddle_height - ball_size 
-     && ball_y < leftPaddle_Y + paddle_height + ball_size) 
+  if (izquierdo.isBallTouching()) 
   {
     ball_dir *= -1;
-    if(leftPaddle_Y!= previousLeftPaddle_Y) {
-      dy = (leftPaddle_Y-previousLeftPaddle_Y)/2.0;
+    if(izquierdo.hasPaddleMoved()) {
+      dy = izquierdo.paddleMovement()/2.0;
       if(dy >  5) { dy =  5; }
       if(dy < -5) { dy = -5; }
     }
@@ -122,10 +97,10 @@ void draw()
 
   
   // If the ball is touching top or bottom edge, reverse direction
-  if(ball_y > height-ball_size) {
+  if(ball_y > height-BALL_SIZE) {
     dy = dy * -1;
   }
-  if(ball_y < ball_size) {
+  if(ball_y < BALL_SIZE) {
     dy = dy * -1;
   }
 
@@ -133,79 +108,87 @@ void draw()
 
   // Draw ball
   fill(255);
-  ellipse(ball_x, ball_y, ball_size, ball_size);
+  ellipse(ball_x, ball_y, BALL_SIZE, BALL_SIZE);
   
-  // Draw the paddle
-  fill(153);
-  rect(width-dist_wall, rightPaddle_Y, paddle_width, paddle_height);
-  rect(dist_wall, leftPaddle_Y, paddle_width, paddle_height);
+  // Draw the paddles
+  izquierdo.display();
+  derecho.display();
   
-  ///////// OSCP /////////////////
-  /*OscMessage msg = new OscMessage("/pos");
-  msg.add(mouseY);
-  oscP5.send(msg,remoteLocation);*/
+
 }
 
 /* incoming osc message are forwarded to the oscEvent method. */
 void oscEvent(OscMessage theOscMessage) {
   float dif =  theOscMessage.get(0).floatValue();
   if(theOscMessage.checkAddrPattern("/left") == true){
-    moveLeftPaddleOnDifference(dif);
+    izquierdo.move(dif);
   }
   if(theOscMessage.checkAddrPattern("/right") == true){
-    moveRightPaddleOnDifference(dif);
+    derecho.move(dif);
   }
-  println("received Y:" + dif + "ext: " + pExtMouseY_L + " mo" + extMouseY_L);
-  
+  println("received Y:" + dif);
 }
 
+class Paddle{
+  final static int IZQUIERDO = 0;
+  final static int DERECHO = 1;
 
-void moveLeftPaddleOnDifference(float dif){
-// Tweak as needed
-    int speedFactor = 20;
+  int lado;
+  float y;
+  float previousY;
+  int paddleWidth;
+  int paddleHeight;
+  float py;
+  int speedFactor = 20;
+  float extMovement = 0;
 
+  Paddle(int paddleWidth, int paddleHeight, int lado){
+    y = previousY= height/2;
+    this.paddleWidth = paddleWidth;
+    this.paddleHeight = paddleHeight;
+    this.lado = lado;
+
+    if(this.lado == Paddle.DERECHO){
+      py = width - DIST_WALL - this.paddleWidth - BALL_SIZE;
+    } else if(this.lado == Paddle.DERECHO){
+      py = DIST_WALL + this.paddleWidth + BALL_SIZE;
+    }
+  }
+
+  boolean isBallTouching(){
+    return (ball_x == py /*    ==  */
+        && ball_y > this.y - paddleHeight - BALL_SIZE 
+        && ball_y < this.y + paddleHeight + BALL_SIZE);
+  }
+
+  float paddleMovement(){
+    return (y - previousY);
+  }
+
+  boolean hasPaddleMoved(){
+    return y != previousY;
+  }
+
+  void move(float dif){
     if(dif > 0){
-      extMouseY_L += abs(dif) * speedFactor;
+      extMovement += abs(dif) * speedFactor;
     }
     if(dif < 0){
-      extMouseY_L -= abs(dif) * speedFactor;
+      extMovement -= abs(dif) * speedFactor;
     }
-    extMouseY_L = constrain(extMouseY_L, 0, 360);
-}
+    extMovement = constrain(extMovement, 0, 360);
 
+    previousY = y;
+    y = constrain(extMovement, paddleHeight, height-paddleHeight);
+  }
 
-/*void moveRightPaddle(float y){
-    /*pExtMouseY = extMouseY;
-    if(pExtMouseY <= 0) {
-      extMouseY = 0;
-      return;
-    }
-    if(pExtMouseY >= height){
-      extMouseY = height;
-      return;
-    }
-
-    int speedFactor = 2;
-
-    if(y > 0){
-      extMouseY += abs(y) * speedFactor;
-    }
-    if(y < -0.5){
-      extMouseY -= abs(y) * speedFactor;
-    }
-    extMouseY = constrain(extMouseY, 0, 360);
-}*/
-
-void moveRightPaddleOnDifference(float dif){
-    // Tweak as needed
-    int speedFactor = 20;
-
-    if(dif > 0){
-      extMouseY_R += abs(dif) * speedFactor;
-    }
-    if(dif < 0){
-      extMouseY_R -= abs(dif) * speedFactor;
-    }
-    extMouseY_R = constrain(extMouseY_R, 0, 360);
+  void display(){
+    float x = 0;
+    if(lado == Paddle.IZQUIERDO) x = DIST_WALL;
+    if(lado == Paddle.DERECHO) x = width - DIST_WALL;
+    
+    fill(153);
+    rect(x, y, paddleWidth, paddleHeight);
+  }
 
 }
