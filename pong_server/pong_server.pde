@@ -24,7 +24,13 @@ float pExtMouseY_L = 0;
 int paddle_width = 10;
 int paddle_height = 60;
 
+float previousRightPaddle_Y = 0;
+float previousLeftPaddle_Y = 0;
+
 int dist_wall = 15;
+
+float leftPaddle_Y = 0;
+float rightPaddle_Y = 0;
 
 //////////OSCP
 OscP5 oscP5;
@@ -51,13 +57,14 @@ void setup()
   /////////////OSCP
   oscP5 = new OscP5(this,12001);
   // send to computer address
-  //remoteLocation = new NetAddress("192.168.43.194",12001);
+  //remoteLocation = new NetAddress("192.168.0.2",12001);
 }
 
 void draw() 
 {
   background(51);
   
+
   ball_x += ball_dir * 1.0;
   ball_y += dy;
 
@@ -73,9 +80,10 @@ void draw()
 
   /*** Right paddle code*/
   // Constrain paddle to screen
+  //updating the previous paddle
+  previousRightPaddle_Y = rightPaddle_Y;
+  rightPaddle_Y = constrain(extMouseY_R, paddle_height, height-paddle_height);
   
-  float rightPaddle_Y = constrain(extMouseY_R, paddle_height, height-paddle_height);
-
   // Test to see if the ball is touching the paddle
   float rightPy = width-dist_wall-paddle_width-ball_size;
   if (ball_x == rightPy /*    ==  */
@@ -83,15 +91,17 @@ void draw()
      && ball_y < rightPaddle_Y + paddle_height + ball_size) 
   {
     ball_dir *= -1;
-    if(extMouseY_R != pExtMouseY_R) {
-      dy = (extMouseY_R-pExtMouseY_R)/2.0;
+    if(rightPaddle_Y != previousRightPaddle_Y) {
+      dy = (rightPaddle_Y-previousRightPaddle_Y)/2.0;
       if(dy >  5) { dy =  5; }
       if(dy < -5) { dy = -5; }
     }
   }
-
+  
+  
   // Left paddle
-  float leftPaddle_Y = constrain(extMouseY_L, paddle_height, height-paddle_height);
+  previousLeftPaddle_Y = leftPaddle_Y;
+  leftPaddle_Y = constrain(extMouseY_L, paddle_height, height-paddle_height);
 
   // Test to see if the ball is touching the paddle
   if (ball_x == dist_wall + paddle_width // ==
@@ -99,12 +109,13 @@ void draw()
      && ball_y < leftPaddle_Y + paddle_height + ball_size) 
   {
     ball_dir *= -1;
-    if(extMouseY_L != pExtMouseY_L) {
-      dy = (extMouseY_L-pExtMouseY_L)/2.0;
+    if(leftPaddle_Y!= previousLeftPaddle_Y) {
+      dy = (leftPaddle_Y-previousLeftPaddle_Y)/2.0;
       if(dy >  5) { dy =  5; }
       if(dy < -5) { dy = -5; }
     }
-  } 
+  }
+  
 
 
   /*********************************BALL CONDITIONS*******************************************/
