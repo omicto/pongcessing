@@ -150,8 +150,8 @@ class Paddle{
 
     if(this.lado == Paddle.DERECHO){
       py = width - DIST_WALL - this.paddleWidth - BALL_SIZE;
-    } else if(this.lado == Paddle.DERECHO){
-      py = DIST_WALL + this.paddleWidth + BALL_SIZE;
+    } else if(this.lado == Paddle.IZQUIERDO){
+      py = DIST_WALL + this.paddleWidth ;
     }
   }
 
