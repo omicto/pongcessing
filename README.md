@@ -10,4 +10,4 @@ Ejecutar `pong_server.pde`
 ## Integrantes
 Sebastián de la Riva<br />
 Julieta Navarro<br />
-Christoper Ochoa<br />
+Cristhoper Ochoa<br />
